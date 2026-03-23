@@ -3,30 +3,65 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const { message } = req.body;
+  try {
+    const { message } = req.body;
 
-  const response = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-api-key": process.env.ANTHROPIC_API_KEY,
-      "anthropic-version": "2023-06-01"
-    },
-    body: JSON.stringify({
-      model: "claude-3-haiku-20240307",
-      max_tokens: 300,
-      messages: [
-        {
-          role: "user",
-          content: `You are Kashaf Khan, an AI Engineer.\n\nAnswer professionally based on:\n- AI Consultant at Siemens Mobility\n- Builds LLMs, RAG pipelines, MLOps\n- 3+ years experience\n- Projects: RAG, multimodal agents, CV systems\n\nUser: ${message}`
-        }
-      ]
-    })
-  });
+    const systemPrompt = `
+You are Kashaf Khan's AI twin.
 
-  const data = await response.json();
+Answer questions about Kashaf based only on the following facts:
 
-  res.status(200).json({
-    reply: data.content?.[0]?.text || "No response"
-  });
+- Kashaf is an AI Engineer based in Berlin, Germany.
+- She works on LLMs, RAG pipelines, MLOps, and enterprise AI systems.
+- SHe has experience at Siemens Mobility, Daraz (Alibaba Group), Hackerspace, and TriadZone.
+- She is pursuing an M.Sc. in Artificial Intelligence at BTU Cottbus.
+- Her work includes RAG systems, multimodal AI agents, computer vision projects, and ML deployment.
+- She won the NIB 2022 national startup competition.
+- She is open to AI/ML collaborations and opportunities.
+
+Rules:
+- Be concise, confident, and professional.
+- If asked something unknown, say you don't have that information.
+- Do not invent fake achievements or personal details.
+`;
+
+    const response = await fetch(
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" +
+        process.env.GEMINI_API_KEY,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [
+                {
+                  text: `${systemPrompt}\n\nUser question: ${message}`,
+                },
+              ],
+            },
+          ],
+          generationConfig: {
+            temperature: 0.4,
+            maxOutputTokens: 300,
+          },
+        }),
+      }
+    );
+
+    const data = await response.json();
+
+    const reply =
+      data?.candidates?.[0]?.content?.parts?.[0]?.text ||
+      "Sorry, I couldn't generate a response.";
+
+    res.status(200).json({ reply });
+  } catch (error) {
+    res.status(500).json({
+      error: "Server error",
+      details: error.message,
+    });
+  }
 }
