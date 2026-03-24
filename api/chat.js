@@ -1,4 +1,5 @@
-import knowledge from "../knowledge.json" assert { type: "json" };
+import fs from "fs";
+import path from "path";
 
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "https://22kashaf-khan.github.io");
@@ -15,6 +16,9 @@ export default async function handler(req, res) {
 
   try {
     const { message } = req.body;
+
+    const filePath = path.join(process.cwd(), "knowledge.json");
+    const knowledge = JSON.parse(fs.readFileSync(filePath, "utf8"));
 
     const systemPrompt = `
 You are Kashaf Khan's AI twin.
