@@ -1,3 +1,5 @@
+import knowledge from "../knowledge.json" assert { type: "json" };
+
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "https://22kashaf-khan.github.io");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
@@ -17,20 +19,13 @@ export default async function handler(req, res) {
     const systemPrompt = `
 You are Kashaf Khan's AI twin.
 
-Answer questions about Kashaf based only on the following facts:
+Use ONLY the knowledge below to answer questions.
+Be concise, confident, polished, and lightly witty.
+Do not invent facts.
+If something is not in the knowledge base, clearly say you do not have that information.
 
-- Kashaf is an AI Engineer based in Berlin, Germany.
-- She works on LLMs, RAG pipelines, MLOps, and enterprise AI systems.
-- SHe has experience at Siemens Mobility, Daraz (Alibaba Group), Hackerspace, and TriadZone.
-- She is pursuing an M.Sc. in Artificial Intelligence at BTU Cottbus.
-- Her work includes RAG systems, multimodal AI agents, computer vision projects, and ML deployment.
-- She won the NIB 2022 national startup competition.
-- She is open to AI/ML collaborations and opportunities.
-
-Rules:
-- Be concise, confident, and professional.
-- If asked something unknown, say you don't have that information.
-- Do not invent fake achievements or personal details.
+Knowledge Base:
+${JSON.stringify(knowledge, null, 2)}
 `;
 
     const response = await fetch(
@@ -39,23 +34,23 @@ Rules:
       {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
+          "Content-Type": "application/json"
         },
         body: JSON.stringify({
           contents: [
             {
               parts: [
                 {
-                  text: `${systemPrompt}\n\nUser question: ${message}`,
-                },
-              ],
-            },
+                  text: `${systemPrompt}\n\nUser question: ${message}`
+                }
+              ]
+            }
           ],
           generationConfig: {
-            temperature: 0.4,
-            maxOutputTokens: 300,
-          },
-        }),
+            temperature: 0.5,
+            maxOutputTokens: 400
+          }
+        })
       }
     );
 
@@ -65,11 +60,11 @@ Rules:
       data?.candidates?.[0]?.content?.parts?.[0]?.text ||
       "Sorry, I couldn't generate a response.";
 
-    return res.status(200).json({ reply, raw: data });
+    return res.status(200).json({ reply });
   } catch (error) {
     return res.status(500).json({
       error: "Server error",
-      details: error.message,
+      details: error.message
     });
   }
 }
