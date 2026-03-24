@@ -51,8 +51,8 @@ ${JSON.stringify(knowledge, null, 2)}
             }
           ],
           generationConfig: {
-            temperature: 0.5,
-            maxOutputTokens: 400
+            temperature: 0.4,
+            maxOutputTokens: 700
           }
         })
       }
